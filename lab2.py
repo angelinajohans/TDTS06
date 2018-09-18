@@ -32,5 +32,11 @@ class serverSocket:
         self.sock.bind((socket.gethostname(), port_server))
         print("Socket is bound to",port_server)
         self.sock.listen(10)
-    
 
+
+def main():
+    servsock = serverSocket(8000)
+
+
+if __name__ == "__main__":
+    main()
