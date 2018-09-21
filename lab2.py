@@ -1,6 +1,7 @@
 import socket
 import threading
 import re
+import re
     
 class serverSocket:
     
@@ -25,13 +26,16 @@ class serverSocket:
         #print(os.getpid(), "closed socket")
 
     def recv_from_client(self, incommingSocket):
-        msg = incommingSocket.recv(4000)
-        if msg != "None":
-            return(msg)
-        else:
-            incommingSocket.close()
-            print("Socket closed")
-            return("Empty message")
+        hardmsg = incommingSocket.recv(4000)
+        msg = hardmsg.decode(encoding="utf-8", errors="strict")
+        # m = re.search('^Upgr:(.*)', msg)
+        mreg = re.search('(?<=www.)\w+', msg)
+        print('First message with regex:', mreg.group(0))
+        # m = re.search('https?:\ / \ / (?!.*:\ / \ /)\S +', msg)
+        print ('bytesmessage', hardmsg)
+        print('stringmseeage', msg)
+        # print ('https message is', m)
+
 
 # Don't know if this will ever be used...
     def close_socket(self):
@@ -58,11 +62,11 @@ class searcher_researcher:
             url = recv_msg[(position_url + 3):-((len(recv_msg) - (url_end) - 1))]
     
 def main():
-    serverSock = serverSocket(8080)
+    serverSock = serverSocket(8000)
     while 1:
-        msg = serverSock.hear_client()
+        serverSock.hear_client()
         print("Next print is the msg")
-        print(msg)
+
 
 if __name__ == "__main__":
     main()
