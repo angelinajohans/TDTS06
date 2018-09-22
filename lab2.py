@@ -26,15 +26,13 @@ class serverSocket:
         #print(os.getpid(), "closed socket")
 
     def recv_from_client(self, incommingSocket):
-        hardmsg = incommingSocket.recv(4000)
-        msg = hardmsg.decode(encoding="utf-8", errors="strict")
-        # m = re.search('^Upgr:(.*)', msg)
-        mreg = re.search('(?<=www.)\w+', msg)
-        print('First message with regex:', mreg.group(0))
-        # m = re.search('https?:\ / \ / (?!.*:\ / \ /)\S +', msg)
-        print ('bytesmessage', hardmsg)
-        print('stringmseeage', msg)
-        # print ('https message is', m)
+        bytes_request = incommingSocket.recv(4000)
+        string_request = bytes_request.decode(encoding="utf-8", errors="strict")
+        print('Original string:', string_request)
+        url_of_page = re.findall('Host:(.+)', bytes_request.decode('utf-8'))
+        new_request = re.sub('https?:\/+\/.+ ', '/ ', string_request)
+        print('The url of the page:', url_of_page[0])
+        print('New request1', new_request)
 
 
 # Don't know if this will ever be used...
