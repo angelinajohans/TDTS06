@@ -77,7 +77,7 @@ class serverSocket:
 
     
 def main():
-    serverSock = serverSocket(8080)
+    serverSock = serverSocket(8000)
     while 1:
         serverSock.hear_client()
 
