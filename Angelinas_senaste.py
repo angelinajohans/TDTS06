@@ -1,65 +1,46 @@
 import socket
 import threading
 import re
+import codecs
+import sys
 
 class uglyWordsFinder:
 
     def need_to_investigate(self, request): #or just url?
+        print("In the need_to_investigate function")
         pic_formats = ["tif","tiff","bmp","jpg","jpeg","gif","png","eps"]
         for i in pic_formats:
-            exist = 1 #request.find(i)
+            exist = request.find(i)
             if exist == 1:
+                print("The object does not need to be investigated")
                 return False
             else:
+                print("The object needs to be investigated")
                 return True
         
     def acceptable(self, obj_of_interest):
         forbidden_words = ["[Bb]ritney ?[Ss]pears", "[Pp]aris ?[Hh]ilton", "[Ll]inkoping", "[Ss]ponge[Bb]ob"]
         if self.need_to_investigate(obj_of_interest):
             for i in forbidden_words:
-                found_words = [1]#re.findall(i,obj_of_interest)
+                found_words = re.findall(i,obj_of_interest)
                 if found_words != []:
+                    print("The object is dirty")
                     return False
                 else:
                     continue
+            print("The object is clean")
             return True
         else:
+            print("The object is clean")
             return True
             
 class clientSocket:
 
     def __init__(self, webpage):
-        str(webpage)
-        webpage.strip('\n')
-        webpage.strip(' ')
-        webpage.strip('\r')
-        webpage.strip('\t')
+        webpage = webpage[:len(webpage)-1]
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Client socket created")
-        print("Trying to connect to",webpage)
-        print(type(webpage))
-        webpage_test = "www.overleaf.com"
-        webpage_test.strip('\n')
-        webpage_test.strip(' ')
-        webpage_test.strip('\r')
-        
-        iter_vec = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
-
-        print("Length of webpage",len(webpage))
-        print("Length of webpage_test",len(webpage_test))
-        
-        if webpage == webpage_test:
-            print("THE STRINGS ARE EQUAL!")
-        else:
-            print("THE STRINGS ARE NOT EQUAL... HELP!")
-        for i in iter_vec:
-            if webpage[:i] == webpage_test[:i]:
-                print("THE LETTERS ARE EQUAL!")
-                print(webpage[:i],"=",webpage_test[:i])
-            else:
-                print("THE LETTERS ARE NOT EQUAL AND I DO NOT KNOW WHAT TO DO!")
-                print(webpage[:i],"≠",webpage_test[:i])
-                
+        print("Trying to connect to",webpage)                
         self.sock.connect((webpage,80))
         print("Server socket connects to",webpage,"on port 80")
 
@@ -68,7 +49,9 @@ class clientSocket:
         request_to_send = request.encode("utf=8", errors="strict")
         print(type(request_to_send))
         self.sock.send(request_to_send)
+        print("Request to the webserver has been sent")
         webserver_msg = self.sock.recv(4000)
+        print("A response message has been received")
         return webserver_msg
 
     def close_socket(self):
@@ -76,6 +59,9 @@ class clientSocket:
         self.sock.close()
 
 class serverSocket:
+
+    badUrl_url = "www.ida.liu.se/~TDTS04/labs/2011/ass2/error1.html"
+    badContent_url = "www.ida.liu.se/~TDTS04/labs/2011/ass2/error2.html"
     
     def __init__(self, port_server):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -88,7 +74,8 @@ class serverSocket:
         print("Server is listening")
 
     def redirect(self, new_url):
-        redirection_response = "HTTP/1.1 302 Found\r\nLocation: " + new_url + "\r\nContent-Type: "
+        redirection_response = "HTTP/1.1 302 Found\r\nLocation: http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error2.html\r\nConnection: close\r\n"
+        print("This is the redirection response",redirection_response)
         redirection_to_send = redirection_response.encode("utf=8", errors="strict")
         return redirection_to_send
         
@@ -102,31 +89,38 @@ class serverSocket:
         new_thread_id.start()
 
     def handle_request(self, incommingSocket, request, url):
-        print("Want to create client socket and connect to",url[0])
+        print("Want to create client socket and connect to",url)
         checker = uglyWordsFinder()
         if checker.acceptable(url):
-            clientSock = clientSocket(url[0])
+            clientSock = clientSocket(url)
             print(clientSock)
             print(type(request))
             response = clientSock.forward_request(request)
-            string_response = response.decode(encoding="utf-8", errors="strict")
-            if checker.acceptable(string_response):
-                print("The webserver message is:\n",string_response)
+            print("The size of the response is",sys.getsizeof(response))
+            print("Response is received\n",response)
+            data_position = response.find(b'\r\n\r\n')
+            response_header = response[:data_position+2]
+            response_data = response[data_position+4:]
+            print(response_header,"\n\n")
+            print(response_data)
+            string_data = codecs.encode(response_data,'hex')
+            string_data_response = response_data.decode(encoding="utf-8", errors="strict")
+            if checker.acceptable(string_data_response):
+                print("The webserver message is:\n",string_data_response)
                 incommingSocket.send(response)
                 print("The webserver response has been forwarded to the client")
                 clientSock.close_socket()
             else:
                 print("Bad content")
-                redirect_response = self.redirect(badContent_url)
+                redirect_response = self.redirect(self.badContent_url)
                 incommingSocket.send(redirect_response)
                 print("The webserver response was dirty, the client has been redirected")
                 clientSock.close_socket()
         else:
             print("Bad url!")
-            redirect_response = self.redirect(badUrl_url)
+            redirect_response = self.redirect(self.badUrl_url)
             incommingSocket.send(redirect_response)
             print("The url was dirty, the client ha been redirected")
-            clientSock.close_socket()
 
     def recv_from_client(self, incommingSocket):
         bytes_request = incommingSocket.recv(4000)
@@ -134,7 +128,7 @@ class serverSocket:
         string_request = bytes_request.decode(encoding="utf-8", errors="strict")
         print('Original string:',string_request)
         url_of_page = re.findall('Host: (.+)',bytes_request.decode('utf-8'))
-        new_request = re.sub('https?:\/+\/.+ ','/ ',string_request)
+        new_request = re.sub('https?:\/+\/.+','/',string_request)
         new_request_to_send = re.sub('[Pp]roxy.[Cc]onnection:.+','Connection: close\r',new_request)
         #divide_msg = re.search('Proxy(.+)', new_request)
         #req_no_connKeepAlive = new_request[:divide_msg.start()] + new_request[divide_msg.end():]
@@ -143,7 +137,7 @@ class serverSocket:
         print('New request1\n',new_request)
         #print('Request without Connection: Keep-Alive \n',req_no_connKeepAlive)
         print('Request with no Keel-Alive and one new line \n',new_request_to_send)
-        self.handle_request(incommingSocket, new_request_to_send, url_of_page)
+        self.handle_request(incommingSocket, new_request_to_send, url_of_page[0])
 
 
 
