@@ -53,7 +53,7 @@ class clientSocket:
         request_to_send = request.encode("utf=8", errors="strict")
         print(type(request_to_send))
         self.sock.send(request_to_send)
-        print("Request to the webserver has been sent")
+        print("Request to the webserver has been sent\n",request_to_send)
         webserver_msg = self.sock.recv(4096)
         print("A response message has been received")
         return webserver_msg
@@ -65,8 +65,8 @@ class clientSocket:
 
 class serverSocket:
 
-    badUrl_url = "www.ida.liu.se/~TDTS04/labs/2011/ass2/error1.html"
-    badContent_url = "www.ida.liu.se/~TDTS04/labs/2011/ass2/error2.html"
+    badUrl_url = "http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error1.html"
+    badContent_url = "http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error2.html"
     
     def __init__(self, port_server):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,8 +80,8 @@ class serverSocket:
         self.checker = uglyWordsFinder()
 
     def redirect(self, new_url):
-        redirection_response = "HTTP/1.1 302 Found\r\nLocation: /~TDTS04/labs/2011/ass2/error2.html\r\nHost: www.ida.liu.se\r\nConnection: close\r\n"
-        print("This is the redirection response",redirection_response)
+        redirection_response = "HTTP/1.1 302 Found\r\nLocation:" + new_url +"\r\nConnection: close\r\n\r\n"
+        print("This is the redirection response\n",redirection_response)
         redirection_to_send = redirection_response.encode("utf=8", errors="strict")
         return redirection_to_send
         
@@ -130,15 +130,15 @@ class serverSocket:
         print('Original string:',string_request)
         if self.checker.acceptable(string_request):
             if string_request.find('http://') != -1:
-                print("http in first line")
-                url_of_page = re.findall('https?:\/+\/.+?(?=\/)',string_request)
+                print("Http in first line")
+                url_of_page = re.findall('http:\/+\/.+?(?=\/)',string_request)
                 print('Found url',url_of_page[0])
                 url_no_http = re.sub('(https?:\/\/)','',url_of_page[0])
-                print('Removed http',url_no_http)
+                print('Removed http, the host is',url_no_http)
             else:   
                 url_no_http = re.findall('Host: (.+)',bytes_request.decode('utf-8'))
         
-            new_request = re.sub('https?:\/+\/.+?(?=\/)','',string_request)
+            new_request = re.sub('http:\/+\/.+?(?=\/)','',string_request)
             new_request_to_send = re.sub('[Pp]roxy.[Cc]onnection:.+','Connection: close\r',new_request)
             #divide_msg = re.search('Proxy(.+)', new_request)
             #req_no_connKeepAlive = new_request[:divide_msg.start()] + new_request[divide_msg.end():]
@@ -146,6 +146,7 @@ class serverSocket:
             print('The url of the page:',url_no_http)
             #print('New request1\n',new_request)
             #print('Request without Connection: Keep-Alive \n',req_no_connKeepAlive)
+            new_request_to_send = re.sub('Accept-Encoding:(.+)\r\n', '', new_request_to_send)
             print('Request with no Keel-Alive and one new line \n',new_request_to_send)
             self.handle_request(incommingSocket, new_request_to_send, url_no_http)
 
@@ -153,7 +154,7 @@ class serverSocket:
             print("Bad url!")
             redirect_response = self.redirect(self.badUrl_url)
             incommingSocket.send(redirect_response)
-            print("The url was dirty, the client has been redirected")
+            print("The url was dirty, the client has been redirected to\n",redirect_response)
 
 
 # Don't know if this will ever be used...
