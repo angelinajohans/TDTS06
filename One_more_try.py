@@ -13,10 +13,11 @@ class uglyWordsFinder:
             exist = request.find(i)
             if exist != -1:
                 print("The object does not need to be investigated")
-                return False
+                continue
             else:
                 print("The object needs to be investigated")
                 return True
+        return False
         
     def acceptable(self, obj_of_interest):
         forbidden_words = ["[Bb]ritney ?[Ss]pears", "[Pp]aris ?[Hh]ilton", "[Ll]inkoping", "[Ss]ponge[Bb]ob"]
@@ -79,7 +80,7 @@ class serverSocket:
         self.checker = uglyWordsFinder()
 
     def redirect(self, new_url):
-        redirection_response = "HTTP/1.1 302 Found\r\nLocation: http://www.ida.liu.se/~TDTS04/labs/2011/ass2/error2.html\r\nConnection: close\r\n"
+        redirection_response = "HTTP/1.1 302 Found\r\nLocation: /~TDTS04/labs/2011/ass2/error2.html\r\nHost: www.ida.liu.se\r\nConnection: close\r\n"
         print("This is the redirection response",redirection_response)
         redirection_to_send = redirection_response.encode("utf=8", errors="strict")
         return redirection_to_send
@@ -106,10 +107,10 @@ class serverSocket:
         response_data = response[data_position+4:]
         print(response_header,"\n\n")
         print(response_data)
-        string_data = codecs.encode(response_data,'hex')
-        print("This is the response data, when hex encoder has been applied", string_data)
-        one_more_encoding = codecs.encode(string_data, 'hex')
-        string_data_response = one_more_encoding.decode(encoding="utf-8", errors="strict")
+        #string_data = codecs.encode(response_data,'hex')
+        #print("This is the response data, when hex encoder has been applied", string_data)
+        #one_more_encoding = codecs.encode(string_data, 'hex')
+        string_data_response = response_data.decode(encoding="utf-8", errors="strict")
         if self.checker.acceptable(string_data_response):
             print("The webserver message is:\n",string_data_response)
             incommingSocket.send(response)
@@ -152,7 +153,7 @@ class serverSocket:
             print("Bad url!")
             redirect_response = self.redirect(self.badUrl_url)
             incommingSocket.send(redirect_response)
-            print("The url was dirty, the client ha been redirected")
+            print("The url was dirty, the client has been redirected")
 
 
 # Don't know if this will ever be used...
