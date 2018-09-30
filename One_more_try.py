@@ -83,7 +83,7 @@ class clientSocket:
         print(type(request_to_send))
         self.sock.send(request_to_send)
         print("Request to the webserver has been sent\n",request_to_send)
-        webserver_msg = self.sock.recv(4096)
+        webserver_msg = self.sock.recv(6114)
         print("A response message has been received")
         return webserver_msg
 
@@ -173,7 +173,7 @@ class serverSocket:
     #Uses the in class global uglyWordsFrider to scan the request for forbidden words
     #Modifies the request message and calls for the handle_request function 
     def recv_from_client(self, incommingSocket):
-        bytes_request = incommingSocket.recv(4096)
+        bytes_request = incommingSocket.recv(6144)
         print(type(bytes_request))
         string_request = bytes_request.decode(encoding="utf-8", errors="strict")
         print('Original string:',string_request)
@@ -227,7 +227,9 @@ class serverSocket:
 #Creates a server socket using the by input desired port
 #Starts the socket functionality     
 def main():
-    serverSock = serverSocket(8080)
+    proxy_socket = input("\nEnter the desired port number: ")
+    print("You chose to create a server socket on port",proxy_socket)
+    serverSock = serverSocket(int(proxy_socket))
     while 1:
         serverSock.hear_client()
 
