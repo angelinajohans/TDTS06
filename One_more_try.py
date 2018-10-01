@@ -71,10 +71,11 @@ class clientSocket:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Client socket created")
         print("Trying to connect to",webpage)                
-        try:
-            self.sock.connect((webpage,80))
-            print("Server socket connects to",webpage,"on port 80")
-        except socket.gaierror:
+        #try:
+        self.sock.connect((webpage,80))
+        print("Server socket connects to",webpage,"on port 80")
+        #except socket.gaierror:
+        #    print("The socket could not be properly connected!")
             
 
     #Forwards the request from server side to the webserver and
@@ -86,7 +87,7 @@ class clientSocket:
         print(type(request_to_send))
         self.sock.send(request_to_send)
         print("Request to the webserver has been sent\n",request_to_send)
-        webserver_msg = self.sock.recv(6114)
+        webserver_msg = self.sock.recv(4096)
         print("A response message has been received")
         return webserver_msg
 
@@ -133,7 +134,7 @@ class serverSocket:
         print("New thread created")
         print(new_thread_id)
         new_thread_id.start()
-        self.sock.listen(1)
+        #self.sock.listen(1)
 
     #Creates a client socket using the input argument url
     #Uses the client socket to send the request and receive
@@ -142,41 +143,48 @@ class serverSocket:
     #Closes the client socket when done
     def handle_request(self, incommingSocket, request, url):
         print("Want to create client socket and connect to",url)
-        clientSock = clientSocket(url)
-        print(clientSock)
-        print(type(request))
-        response = clientSock.forward_request(request)
-        print("The size of the response is",sys.getsizeof(response))
-        print("Response is received\n",response)
-        data_position = response.find(b'\r\n\r\n')
-        response_header = response[:data_position+2]
-        response_data = response[data_position+4:]
-        print(response_header,"\n\n")
-        print(response_data)
-        #string_data = codecs.encode(response_data,'hex')
-        #print("This is the response data, when hex encoder has been applied", string_data)
-        #one_more_encoding = codecs.encode(string_data, 'hex')
-        string_data_response = response_data.decode(encoding="utf-8", errors="strict")
-        
-        #If the response does not contain forbidden words just forward the response.
-        #If there are forbidden words use the redirect function.
-        if self.checker.acceptable(string_data_response):
-            print("The webserver message is:\n",string_data_response)
-            incommingSocket.send(response)
-            print("The webserver response has been forwarded to the client")
-            clientSock.close_socket()
-        else:
-            print("Bad content")
-            redirect_response = self.redirect(self.badContent_url)
-            incommingSocket.send(redirect_response)
-            print("The webserver response was dirty, the client has been redirected")
-            clientSock.close_socket()
+        try:
+            clientSock = clientSocket(url)
+            
+            print(clientSock)
+            print(type(request))
+            response = clientSock.forward_request(request)
+            print("The size of the response is",sys.getsizeof(response))
+            print(type(response))
+            print("Response is received\n",response)
+            data_position = response.find(b'\r\n\r\n')
+            response_header = response[:data_position+2]
+            response_data = response[data_position+4:]
+            print("This is response_header:\n",response_header,"\n\n")
+            print("This is response_data:\n",response_data)
+            #string_data = codecs.encode(response_data,'hex')
+            #print("This is the response data, when hex encoder has been applied", string_data)
+            #one_more_encoding = codecs.encode(string_data, 'hex')
+            string_data_response = response_data.decode(encoding="utf-8", errors="strict")
+
+            #If the response does not contain forbidden words just forward the response.
+            #If there are forbidden words use the redirect function.
+            if self.checker.acceptable(string_data_response):
+                print("The webserver message is:\n",string_data_response)
+                incommingSocket.send(response)
+                print("The webserver response has been forwarded to the client")
+                clientSock.close_socket()
+            else:
+                print("Bad content")
+                redirect_response = self.redirect(self.badContent_url)
+                incommingSocket.send(redirect_response)
+                print("The webserver response was dirty, the client has been redirected")
+                clientSock.close_socket()
+
+        except socket.gaierror:
+            print("The socket could not be properly connected!")
+            incommingSocket.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
             
     #Receives request from client and decodes the mesasge to a string
     #Uses the in class global uglyWordsFrider to scan the request for forbidden words
     #Modifies the request message and calls for the handle_request function 
     def recv_from_client(self, incommingSocket):
-        bytes_request = incommingSocket.recv(6144)
+        bytes_request = incommingSocket.recv(4096)
         print(type(bytes_request))
         string_request = bytes_request.decode(encoding="utf-8", errors="strict")
         print('Original string:',string_request)
@@ -191,20 +199,20 @@ class serverSocket:
             #If no "http://" is found the fist line does not need to be modefiend and the host is identified. 
             if string_request.find('http://') != -1:
                 print("Http in first line")
-                url_of_page = re.findall('http:\/+\/.+?(?=\/)',string_request)
-                print('Found url',url_of_page[0])
-                #host_of_page = re.findall("Host: .+?(?=\\)",bytes_request)
-                #print('The host in host line is:\n',host_of_page)
-                url_no_http = re.sub('(https?:\/\/)','',url_of_page[0])
-                print('Removed http, the host is',url_no_http)
-                new_request = re.sub('http:\/+\/.+?(?=\/)','',string_request)
+                url_from_first_line = re.findall('http:\/+\/(.+?)(?=\/)',string_request)
+                url_no_http = url_from_first_line[0]
+                print('Found url',url_no_http)
+                #url_no_http = re.sub('(https?:\/\/)','',url_of_page[0])
+                #print('Removed http, the host is',url_no_http)
+                string_request = re.sub('http:\/+\/.+?(?=\/)','',string_request)
             else:   
-                url_no_http = re.findall('Host: (.+)',string_request)
+                url_from_host = re.findall('Host: (.+)',string_request)
+                url_no_http = re.sub('\r','',url_from_host[0])
         
             #new_request = re.sub('http:\/+\/.+?(?=\/)','',string_request)
             
             #Modify the Connection-header
-            new_request_to_send = re.sub('[Pp]roxy.[Cc]onnection:.+','Connection: close\r',new_request)
+            new_request_to_send = re.sub('[Pp]roxy.[Cc]onnection:.+','Connection: close\r',string_request)
             #divide_msg = re.search('Proxy(.+)', new_request)
             #req_no_connKeepAlive = new_request[:divide_msg.start()] + new_request[divide_msg.end():]
             #new_ready_to_send = re.sub('\n\n', '\n', req_no_connKeepAlive)
@@ -213,7 +221,7 @@ class serverSocket:
             #print('Request without Connection: Keep-Alive \n',req_no_connKeepAlive)
             
             #Modify the Accept-Encoding-header
-            new_request_to_send = re.sub('Accept-Encoding:(.+)\r\n', '', new_request_to_send)
+            new_request_to_send = re.sub('Accept-Encoding:(.+)\r\n', 'Accept-Encoding: \r\n', new_request_to_send)
             print('Request with no Keel-Alive and one new line \n',new_request_to_send)
             self.handle_request(incommingSocket, new_request_to_send, url_no_http)
 
@@ -224,7 +232,7 @@ class serverSocket:
             print("The url was dirty, the client has been redirected to\n",redirect_response)
 
 
-# Don't know if this will ever be used...
+    # Don't know if this will ever be used...
     def close_socket(self):
         print("About to close server socket")
         self.sock.close()
@@ -234,9 +242,21 @@ class serverSocket:
 def main():
     proxy_socket = input("\nEnter the desired port number: ")
     print("You chose to create a server socket on port",proxy_socket)
-    serverSock = serverSocket(int(proxy_socket))
-    while 1:
-        serverSock.hear_client()
+    try:
+        serverSock = serverSocket(int(proxy_socket))
+        while 1:
+            serverSock.hear_client()
+    except ValueError:
+        print("\nInvalid value, enter a value higher than 8000!")
+        main()
+
+    except OverflowError:
+        print("\nInvalid value, enter a value higher than 8000 but less than 65000!")
+        main()
+
+    except PermissionError:
+        print("\nInvalid value, enter a value higher than 8000!")
+        main()
 
 #Runs the main function
 if __name__ == "__main__":
