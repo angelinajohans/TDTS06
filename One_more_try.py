@@ -71,8 +71,11 @@ class clientSocket:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Client socket created")
         print("Trying to connect to",webpage)                
-        self.sock.connect((webpage,80))
-        print("Server socket connects to",webpage,"on port 80")
+        try:
+            self.sock.connect((webpage,80))
+            print("Server socket connects to",webpage,"on port 80")
+        except socket.gaierror:
+            
 
     #Forwards the request from server side to the webserver and
     #receives the response message from the webserver.
@@ -130,7 +133,7 @@ class serverSocket:
         print("New thread created")
         print(new_thread_id)
         new_thread_id.start()
-        #self.sock.listen(1)
+        self.sock.listen(1)
 
     #Creates a client socket using the input argument url
     #Uses the client socket to send the request and receive
@@ -190,13 +193,15 @@ class serverSocket:
                 print("Http in first line")
                 url_of_page = re.findall('http:\/+\/.+?(?=\/)',string_request)
                 print('Found url',url_of_page[0])
+                #host_of_page = re.findall("Host: .+?(?=\\)",bytes_request)
+                #print('The host in host line is:\n',host_of_page)
                 url_no_http = re.sub('(https?:\/\/)','',url_of_page[0])
                 print('Removed http, the host is',url_no_http)
-                #new_request = re.sub('http:\/+\/.+?(?=\/)','',string_request)
+                new_request = re.sub('http:\/+\/.+?(?=\/)','',string_request)
             else:   
-                url_no_http = re.findall('Host: (.+)',bytes_request.decode('utf-8'))
+                url_no_http = re.findall('Host: (.+)',string_request)
         
-            new_request = re.sub('http:\/+\/.+?(?=\/)','',string_request)
+            #new_request = re.sub('http:\/+\/.+?(?=\/)','',string_request)
             
             #Modify the Connection-header
             new_request_to_send = re.sub('[Pp]roxy.[Cc]onnection:.+','Connection: close\r',new_request)
