@@ -17,22 +17,23 @@ class uglyWordsFinder:
         #look for the format keyword in the input string
         for i in pic_formats:
             exist = request.find(i)
+            print('The uglyWordsFinder is searching through the content and exist is:',exist)
             
             #If the image format keyword is not found, continue with next keyword
             #else (if the keyeord is found) return True; needs to be investagated
             if exist != -1:
                 print('The object does not need to be investigated')
-                continue
+                return False
             else:
-                print('The object needs to be investigated')
-                return True
-        return False
+                continue
+        print('The object needs to be investigated')
+        return True
         
     #This function check if the object of interest contains any forbidden words.
     #If contains fobidden words, it is unacceptable and returns False
     #If does not contain forbidden words, it is acceptable and returns True
     def acceptable(self, obj_of_interest):
-        forbidden_words = ['[Bb]ritney ?[Ss]pears', '[Pp]aris ?[Hh]ilton', '[Ll]inkoping', '[Ss]ponge[Bb]ob']
+        forbidden_words = ['[Bb]ritney ?[Ss]pears', '[Pp]aris ?[Hh]ilton', '[Ss]ponge[Bb]ob']
         
         #If the object of interest needs to be investigated
         #enter search for forbidden words

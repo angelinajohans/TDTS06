@@ -31,19 +31,19 @@ class clientSocket:
         print('This is the sent_msg_size:',sent_msg_size)
         print(type(request_to_send))
         while sent_msg_size < send_msg_size:
-            sent_msg = self.sock.sendall(request_to_send[sent_msg_size:])
+            sent_msg = self.sock.send(request_to_send[sent_msg_size:])
             print('This is the sent_msg:',sent_msg)
-            if sent_msg != 0:
-                sent_msg_size = sent_msg_size[0] + sent_msg
-                print('This is the sent_msg_size:',sent_msg_size,'after the plus operation')
+            print(type(sent_msg))
+            sent_msg_size = sent_msg_size + sent_msg
+            print('This is the sent_msg_size:',sent_msg_size,'after the plus operation')
         print('Request to the webserver has been sent\n',request_to_send)
         recv_part_msg = self.sock.recv(4096)
-        print('This is the revc_part_msg:',recv_part_msg)
-        while recv_part_msg != 0:
+        print('\n\nThis is the revc_part_msg:\n',recv_part_msg)
+        while recv_part_msg != b'':
             recv_msg[0] = recv_msg[0]+recv_part_msg
             recv_part_msg = self.sock.recv(4096)
         print('A response message has been received')
-        return recv_msg
+        return recv_msg[0]
 
     #Closes the client socket
     def close_socket(self):
