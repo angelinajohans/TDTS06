@@ -4,21 +4,21 @@ from serverSocket import serverSocket
 #Starts the socket functionality     
 def main():
     proxy_socket = input('\nEnter the desired port number: ')
-    print'You chose to create a server socket on port',proxy_socket
+    print('You chose to create a server socket on port',proxy_socket)
     try:
         serverSock = serverSocket(int(proxy_socket))
         while 1:
             serverSock.hear_client()
     except ValueError:
-        print'\nInvalid value, enter a value higher than 8000!'
+        print('\nInvalid value, enter a value higher than 8000!')
         main()
 
     except OverflowError:
-        print'\nInvalid value, enter a value higher than 8000 but less than 65000!'
+        print('\nInvalid value, enter a value higher than 8000 but less than 65000!')
         main()
 
     except PermissionError:
-        print'\nInvalid value, enter a value higher than 8000!'
+        print('\nInvalid value, enter a value higher than 8000!')
         main()
 
 #Runs the main function
