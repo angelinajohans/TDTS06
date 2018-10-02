@@ -4,6 +4,8 @@ import re
 #Contains the scanning/filtering functions
 class uglyWordsFinder:
     
+    picture = 0
+
     #This function checks whether the input argument string contains an image 
     #and subsequently does not need to be investigated or does not contain an image
     #and should be investigated.
@@ -11,7 +13,7 @@ class uglyWordsFinder:
     #Does not contain image returns True
     def need_to_investigate(self, request): #or just url?
         print('In the need_to_investigate function')
-        pic_formats = ['tif','tiff','bmp','jpg','jpeg','gif','png','eps']
+        pic_formats = ['.tif','.tiff','.bmp','.jpg','.jpeg','.gif','.png','.eps', '.ico']
         
         #For every item in string list pic_formats
         #look for the format keyword in the input string
@@ -23,10 +25,12 @@ class uglyWordsFinder:
             #else (if the keyeord is found) return True; needs to be investagated
             if exist != -1:
                 print('The object does not need to be investigated')
+                self.picture = 1
                 return False
             else:
                 continue
         print('The object needs to be investigated')
+        self.picture = 0
         return True
         
     #This function check if the object of interest contains any forbidden words.

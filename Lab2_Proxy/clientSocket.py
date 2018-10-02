@@ -31,7 +31,7 @@ class clientSocket:
         print('This is the sent_msg_size:',sent_msg_size)
         print(type(request_to_send))
         while sent_msg_size < send_msg_size:
-            sent_msg = self.sock.send(request_to_send[sent_msg_size:])
+            sent_msg = self.sock.sendall(request_to_send[sent_msg_size:])
             print('This is the sent_msg:',sent_msg)
             print(type(sent_msg))
             sent_msg_size = sent_msg_size + sent_msg

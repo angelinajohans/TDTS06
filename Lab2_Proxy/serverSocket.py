@@ -50,7 +50,11 @@ class serverSocket:
     #a response. Uses the in class global uglyWordsFinder word scan
     #to decide on what response to send to the client
     #Closes the client socket when done
-    def handle_request(self, incommingSocket, request, url):
+    def handle_request(self, incommingSocket, request, url, is_picture):
+        
+        send_msg_size = 0
+        sent_msg_size = 0
+        
         print('Want to create client socket and connect to',url)
         try:
             clientSock = clientSocket(url)
@@ -61,28 +65,47 @@ class serverSocket:
             print('The size of the response is',sys.getsizeof(response))
             print(type(response))
             print('Response is received\n',response)
-            data_position = response.find(b'\r\n\r\n')
-            response_header = response[:data_position+2]
-            response_data = response[data_position+4:]
-            print('This is response_header:\n',response_header,'\n\n')
-            print('This is response_data:\n',response_data)
-            #string_data = codecs.encode(response_data,'hex')
-            #print('This is the response data, when hex encoder has been applied', string_data)
-            #one_more_encoding = codecs.encode(string_data, 'hex')
-            string_data_response = response_data.decode(encoding='utf-8', errors='strict')
 
             #If the response does not contain forbidden words just forward the response.
             #If there are forbidden words use the redirect function.
-            if self.checker.acceptable(string_data_response):
-                print('The webserver message is:\n',string_data_response)
-                incommingSocket.sendall(response)
-                print('The webserver response has been forwarded to the client')
-                clientSock.close_socket()
+            if is_picture == 0:
+                print('The picture in checker is ste to 0!')
+                data_position = response.find(b'\r\n\r\n')
+                response_header = response[:data_position+2]
+                response_data = response[data_position+4:]
+                print('This is response_header:\n',response_header,'\n\n')
+                print('This is response_data:\n',response_data)
+            #string_data = codecs.encode(response_data,'hex')
+            #print('This is the response data, when hex encoder has been applied', string_data)
+            #one_more_encoding = codecs.encode(string_data, 'hex')
+
+                string_data_response = response_data.decode(encoding='utf-8', errors='strict')
+
+                if self.checker.acceptable(string_data_response):
+                    print('WITH CHECKER')
+                    print('The webserver message is:\n',string_data_response)
+                    incommingSocket.sendall(response)
+                    print('The webserver response has been forwarded to the client')
+                    clientSock.close_socket()
+                else:
+                    print('Bad content')
+                    redirect_response = self.redirect(self.badContent_url)
+                    incommingSocket.sendall(redirect_response)
+                    print('The webserver response was dirty, the client has been redirected')
+                    clientSock.close_socket()
             else:
-                print('Bad content')
-                redirect_response = self.redirect(self.badContent_url)
-                incommingSocket.sendall(redirect_response)
-                print('The webserver response was dirty, the client has been redirected')
+                #print('The webserver message is:\n',string_data_response)
+                print('NO CHECKER')
+                send_msg_size = len(response)
+                while sent_msg_size < send_msg_size:
+                    sent_msg = incommingSocket.sendall(response[sent_msg_size:])
+                    print('This is the sent_msg:',sent_msg)
+                    print(type(sent_msg))
+                    sent_msg_size = sent_msg_size + sent_msg
+                    print('This is the sent_msg_size:',sent_msg_size,'after the plus operation')
+                
+                #incommingSocket.sendall(response)
+                print('The webserver response has been forwarded to the client')
                 clientSock.close_socket()
 
         except socket.gaierror:
@@ -134,7 +157,7 @@ class serverSocket:
             #Modify the Accept-Encoding-header
             new_request_to_send = re.sub('Accept-Encoding:(.+)\r\n', 'Accept-Encoding: \r\n', new_request_to_send)
             print('Request with no Keel-Alive and one new line \n',new_request_to_send)
-            self.handle_request(incommingSocket, new_request_to_send, url_no_http)
+            self.handle_request(incommingSocket, new_request_to_send, url_no_http, self.checker.picture)
 
         else:
             print('Bad url!')
