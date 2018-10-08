@@ -19,7 +19,7 @@ class uglyWordsFinder:
         #look for the format keyword in the input string
         for i in pic_formats:
             exist = request.find(i)
-            print('The uglyWordsFinder is searching through the content and exist is:',exist)
+            print('The uglyWordsFinder is searching through the content and exist for',i,'is:',exist)
             
             #If the image format keyword is not found, continue with next keyword
             #else (if the keyeord is found) return True; needs to be investagated
@@ -37,7 +37,7 @@ class uglyWordsFinder:
     #If contains fobidden words, it is unacceptable and returns False
     #If does not contain forbidden words, it is acceptable and returns True
     def acceptable(self, obj_of_interest):
-        forbidden_words = ['[Bb]ritney ?[Ss]pears', '[Pp]aris ?[Hh]ilton', '[Ss]ponge[Bb]ob']
+        forbidden_words = ['[Bb]ritney ?[Ss]pears', '[Pp]aris ?[Hh]ilton', '[Ss]ponge[Bb]ob', '[Ll]inkoping']
         
         #If the object of interest needs to be investigated
         #enter search for forbidden words
@@ -51,14 +51,11 @@ class uglyWordsFinder:
                 found_words = re.findall(i,obj_of_interest)
                 if found_words != []:
                     print('The object is dirty')
-                    print('This is what the function searched through:\n',obj_of_interest)
                     return False
                 else:
                     continue
-            print('The object is clean')
-            print('This is what the function searched through:\n',obj_of_interest)
+            print('The object is clean\n')
             return True
         else:
             print('The object is clean')
-            print('This is what the function searched through:\n',obj_of_interest)
             return True
