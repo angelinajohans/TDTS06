@@ -38,7 +38,7 @@ class uglyWordsFinder:
 
 
     def acceptable_data(self, request):
-        forbidden_words = ['[Bb]ritney ?[Ss]pears', '[Pp]aris ?[Hh]ilton', '[Ss]ponge[Bb]ob']#,'[Mm]otala']
+        forbidden_words = ['[Bb]ritney ?[Ss]pears', '[Pp]aris ?[Hh]ilton', '[Ss]ponge[Bb]ob','[Mm]otala']
          
         #For every item in forbidden words list look for the word in the object of interest.
         #If found return False; not acceptable, if not found continue with next.
