@@ -37,7 +37,7 @@ class uglyWordsFinder:
     #If contains fobidden words, it is unacceptable and returns False
     #If does not contain forbidden words, it is acceptable and returns True
     def acceptable(self, obj_of_interest):
-        forbidden_words = ['[Bb]ritney ?[Ss]pears', '[Pp]aris ?[Hh]ilton', '[Ss]ponge[Bb]ob', '[Ll]inkoping']
+        forbidden_words = ['[Bb]ritney ?[Ss]pears', '[Pp]aris ?[Hh]ilton', '[Ss]ponge[Bb]ob', '[Mm]otala']
         
         #If the object of interest needs to be investigated
         #enter search for forbidden words
