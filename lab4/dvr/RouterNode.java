@@ -11,7 +11,7 @@ public class RouterNode {
   private int[][] updateTable = new int[RouterSimulator.NUM_NODES][RouterSimulator.NUM_NODES];
   private int[] routeThrough = new int[RouterSimulator.NUM_NODES];
   private int[] neighbour = new int[RouterSimulator.NUM_NODES];
-  private boolean poisonedReverse = false;
+  private boolean poisonedReverse = true;
   private boolean linkChanges = false;
 
   //--------------------------------------------------
@@ -107,7 +107,7 @@ public class RouterNode {
 
     }
     updateTable[myID][node] = old_cost;
-    costs[node] = old_cost;
+    //costs[node] = old_cost;
     routeThrough[node] = old_node;
     }
     return updated;
@@ -120,12 +120,12 @@ public class RouterNode {
   //to an updated distance vector, send the new costs
   public void recvUpdate(RouterPacket pkt) {
     myGUI.println("Receive update");
-    int srcID = pkt.sourceid;seeCostofNeighbour
+    int srcID = pkt.sourceid;
     int[] minCost = pkt.mincost;
     //myGUI.println("srcID " + srcID);
     for (int i = 0; i < totNodes; i++){
       updateTable[srcID][i] = minCost[i];
-      //myGUI.println("MinCost" + minCost[i]);
+      myGUI.println("MinCost" + minCost[i]);
     }
     if(updateMinCost()){
       sendUpdate();
@@ -141,18 +141,19 @@ public class RouterNode {
       if(dest == myID){
         continue;
       }
+      int[] tmpCosts = new int[RouterSimulator.NUM_NODES];
       if(costs[dest] != 999){
-      for (int node=0;node<totNodes ;node++ ) {
+      for (int node=0;node<totNodes ;node++ ) {        
         if(poisonedReverse && routeThrough[node]==dest){
           myGUI.println("Send to node table " + dest + " that " + node +" has been Poisoned reversed");
-          costs[node]=999;
+          tmpCosts[node]=999;
         }
         else {
-          costs[node] = updateTable[myID][node];
+          tmpCosts[node] = updateTable[myID][node];
         }
       }
    
-      RouterPacket packet = new RouterPacket(myID,dest,costs);
+      RouterPacket packet = new RouterPacket(myID,dest,tmpCosts);
       sim.toLayer2(packet);
       myGUI.println("Send update");
       }
